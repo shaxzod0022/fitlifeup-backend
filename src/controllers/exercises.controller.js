@@ -1,0 +1,81 @@
+'use strict';
+
+const exercisesService = require('../services/exercises.service');
+
+/**
+ * Контроллер для управления упражнениями (Exercises/Zanyatiya).
+ * Validates: Requirements 1.2, 1.3, 1.4, 1.6, 1.8
+ */
+
+/**
+ * GET /exercises
+ * Получить список упражнений: публичные + собственные.
+ */
+async function listExercises(req, res, next) {
+  try {
+    const exercises = await exercisesService.listExercises(req.userId, req.userRole);
+    res.json(exercises);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /exercises
+ * Создать новое упражнение.
+ */
+async function createExercise(req, res, next) {
+  try {
+    const exercise = await exercisesService.createExercise(req.userId, req.body);
+    res.status(201).json(exercise);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /exercises/:id
+ * Получить упражнение по id.
+ */
+async function getExercise(req, res, next) {
+  try {
+    const exercise = await exercisesService.getExerciseById(req.userId, req.params.id, req.userRole);
+    res.json(exercise);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * PUT /exercises/:id
+ * Обновить упражнение.
+ */
+async function updateExercise(req, res, next) {
+  try {
+    const exercise = await exercisesService.updateExercise(req.userId, req.params.id, req.body, req.userRole);
+    res.json(exercise);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * DELETE /exercises/:id
+ * Удалить упражнение.
+ */
+async function deleteExercise(req, res, next) {
+  try {
+    await exercisesService.deleteExercise(req.userId, req.params.id, req.userRole);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  listExercises,
+  createExercise,
+  getExercise,
+  updateExercise,
+  deleteExercise,
+};

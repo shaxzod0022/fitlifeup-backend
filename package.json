@@ -1,0 +1,37 @@
+{
+  "name": "fitness-tracker-api",
+  "version": "1.0.0",
+  "description": "REST API для отслеживания фитнеса, питания и сна",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.22.1",
+    "express-validator": "7.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "sequelize": "^6.37.8",
+    "sqlite3": "^5.1.7",
+    "swagger-jsdoc": "6.2.8",
+    "swagger-ui-express": "5.0.0",
+    "winston": "3.11.0"
+  },
+  "devDependencies": {
+    "fast-check": "^4.7.0",
+    "jest": "29.7.0",
+    "supertest": "6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js",
+      "**/*.test.js"
+    ]
+  }
+}
