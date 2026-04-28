@@ -1,6 +1,7 @@
 'use strict';
 
-const { UserProfile } = require('../models/index');
+const { UserProfile, User } = require('../models/index');
+const passwordService = require('./password.service');
 const { NotFoundError, ConflictError, ValidationError } = require('../utils/errors');
 
 const VALID_FITNESS_GOALS = ['weight_loss', 'muscle_gain', 'weight_maintenance', 'rehabilitation'];
@@ -40,8 +41,23 @@ async function createProfile(userId, data) {
     throw new ConflictError(`Профиль для пользователя ${userId} уже существует`);
   }
 
+  const user = await User.findByPk(userId);
+  if (!user) throw new NotFoundError(`Foydalanuvchi ${userId} topilmadi`);
+
+  // Update User table fields if provided
+  let userChanged = false;
+  if (data.email && data.email !== user.email) {
+    user.email = data.email;
+    userChanged = true;
+  }
+  if (data.password && data.password.trim() !== '') {
+    user.passwordHash = await passwordService.hash(data.password);
+    userChanged = true;
+  }
+  if (userChanged) await user.save();
+
   const profile = await UserProfile.create({ ...data, userId });
-  return profile;
+  return getProfile(userId);
 }
 
 /**
@@ -52,13 +68,22 @@ async function createProfile(userId, data) {
  * @throws {NotFoundError} Если профиль не найден
  */
 async function getProfile(userId) {
-  const profile = await UserProfile.findOne({ where: { userId } });
+  const profile = await UserProfile.findOne({ 
+    where: { userId },
+    include: [{ model: User, as: 'user', attributes: ['email'] }]
+  });
 
   if (!profile) {
-    throw new NotFoundError(`Профиль пользователя ${userId} не найден`);
+    // If profile doesn't exist, return basic user info at least
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError(`Foydalanuvchi ${userId} topilmadi`);
+    return { email: user.email, name: '', phone: '' };
   }
 
-  return profile;
+  return {
+    ...profile.toJSON(),
+    email: profile.user?.email
+  };
 }
 
 /**
@@ -71,13 +96,35 @@ async function getProfile(userId) {
  */
 async function updateProfile(userId, data) {
   const profile = await UserProfile.findOne({ where: { userId } });
+  const user = await User.findByPk(userId);
 
-  if (!profile) {
-    throw new NotFoundError(`Профиль пользователя ${userId} не найден`);
+  if (!user) {
+    throw new NotFoundError(`Foydalanuvchi ${userId} topilmadi`);
   }
 
-  await profile.update(data);
-  return profile;
+  // Update User table fields
+  let userChanged = false;
+  if (data.email && data.email !== user.email) {
+    user.email = data.email;
+    userChanged = true;
+  }
+  if (data.password && data.password.trim() !== '') {
+    user.passwordHash = await passwordService.hash(data.password);
+    userChanged = true;
+  }
+  
+  if (userChanged) {
+    await user.save();
+  }
+
+  // Update UserProfile table fields
+  if (profile) {
+    await profile.update(data);
+  } else {
+    await UserProfile.create({ ...data, userId });
+  }
+
+  return getProfile(userId);
 }
 
 module.exports = {

@@ -9,7 +9,7 @@
  *            3.4, 3.5, 3.6, 3.7, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 7.1, 7.2, 7.3, 7.6
  */
 
-const { User } = require('../models/User');
+const { User, Role, Permission } = require('../models');
 const passwordService = require('./password.service');
 const tokenService = require('./token.service');
 const { ConflictError, UnauthorizedError, ValidationError } = require('../utils/errors');
@@ -67,8 +67,21 @@ async function register(email, password) {
  * Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7
  */
 async function login(email, password) {
-  // Find user by email
-  const user = await User.findOne({ where: { email } });
+  // Find user by email with role and permissions
+  const user = await User.findOne({ 
+    where: { email },
+    include: [
+      { 
+        model: Role, 
+        as: 'role',
+        include: [{ model: Permission, as: 'permissions' }]
+      },
+      {
+        model: Permission,
+        as: 'userPermissions'
+      }
+    ]
+  });
   
   // If user not found, throw generic error (don't reveal which field is wrong)
   if (!user) {
@@ -84,10 +97,16 @@ async function login(email, password) {
   }
 
   // Generate access token (15 minutes)
-  const accessToken = tokenService.generateAccessToken(user.id, user.role);
+  const roleName = user.role ? user.role.name : 'user';
+  
+  // Combine role permissions and direct user permissions
+  const rolePerms = user.role && user.role.permissions ? user.role.permissions.map(p => p.slug) : [];
+  const userPerms = user.userPermissions ? user.userPermissions.map(p => p.slug) : [];
+  const permissions = [...new Set([...rolePerms, ...userPerms])];
+  const accessToken = tokenService.generateAccessToken(user.id, roleName, { permissions });
 
   // Generate refresh token (7 days) and store in database
-  const refreshToken = await tokenService.generateRefreshToken(user.id, user.role);
+  const refreshToken = await tokenService.generateRefreshToken(user.id, roleName, { permissions });
 
   // Return both tokens and userId
   return {
@@ -128,8 +147,16 @@ async function refresh(refreshToken) {
   }
 
   // Generate new access token
-  const user = await User.findByPk(decoded.userId);
-  const accessToken = tokenService.generateAccessToken(decoded.userId, user.role);
+  const user = await User.findByPk(decoded.userId, {
+    include: [{ 
+      model: Role, 
+      as: 'role',
+      include: [{ model: Permission, as: 'permissions' }]
+    }]
+  });
+  const roleName = user && user.role ? user.role.name : 'user';
+  const permissions = user && user.role && user.role.permissions ? user.role.permissions.map(p => p.slug) : [];
+  const accessToken = tokenService.generateAccessToken(decoded.userId, roleName, { permissions });
 
   return { accessToken };
 }

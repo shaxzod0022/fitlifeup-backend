@@ -13,7 +13,8 @@ const exercisesService = require('../services/exercises.service');
  */
 async function listExercises(req, res, next) {
   try {
-    const exercises = await exercisesService.listExercises(req.userId, req.userRole);
+    const isPrivileged = req.userRole === 'superadmin' || req.userPermissions.includes('manage_exercises');
+    const exercises = await exercisesService.listExercises(req.userId, isPrivileged);
     res.json(exercises);
   } catch (err) {
     next(err);
@@ -39,7 +40,8 @@ async function createExercise(req, res, next) {
  */
 async function getExercise(req, res, next) {
   try {
-    const exercise = await exercisesService.getExerciseById(req.userId, req.params.id, req.userRole);
+    const isPrivileged = req.userRole === 'superadmin' || req.userPermissions.includes('manage_exercises');
+    const exercise = await exercisesService.getExerciseById(req.userId, req.params.id, isPrivileged);
     res.json(exercise);
   } catch (err) {
     next(err);
@@ -52,7 +54,8 @@ async function getExercise(req, res, next) {
  */
 async function updateExercise(req, res, next) {
   try {
-    const exercise = await exercisesService.updateExercise(req.userId, req.params.id, req.body, req.userRole);
+    const isPrivileged = req.userRole === 'superadmin' || req.userPermissions.includes('manage_exercises');
+    const exercise = await exercisesService.updateExercise(req.userId, req.params.id, req.body, isPrivileged);
     res.json(exercise);
   } catch (err) {
     next(err);
@@ -65,7 +68,8 @@ async function updateExercise(req, res, next) {
  */
 async function deleteExercise(req, res, next) {
   try {
-    await exercisesService.deleteExercise(req.userId, req.params.id, req.userRole);
+    const isPrivileged = req.userRole === 'superadmin' || req.userPermissions.includes('manage_exercises');
+    await exercisesService.deleteExercise(req.userId, req.params.id, isPrivileged);
     res.status(204).send();
   } catch (err) {
     next(err);

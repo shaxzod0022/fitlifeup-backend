@@ -6,6 +6,8 @@ const sequelize = require('../config/database');
 const { User, initUser } = require('./User');
 const { RefreshToken, initRefreshToken } = require('./RefreshToken');
 const { BlacklistedToken, initBlacklistedToken } = require('./BlacklistedToken');
+const { Role, initRole } = require('./Role');
+const { Permission, initPermission } = require('./Permission');
 const { Exercise, initExercise } = require('./Exercise');
 const { WorkoutSet, initWorkoutSet } = require('./Set');
 const { SetItem, initSetItem } = require('./SetItem');
@@ -23,6 +25,8 @@ const { CompletedProgram, initCompletedProgram } = require('./CompletedProgram')
 initUser(sequelize);
 initRefreshToken(sequelize);
 initBlacklistedToken(sequelize);
+initRole(sequelize);
+initPermission(sequelize);
 initExercise(sequelize);
 initWorkoutSet(sequelize);
 initSetItem(sequelize);
@@ -41,6 +45,22 @@ initCompletedProgram(sequelize);
 // RefreshToken принадлежит User
 RefreshToken.belongsTo(User, { foreignKey: 'userId' });
 User.hasMany(RefreshToken, { foreignKey: 'userId' });
+
+// Role и User
+User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
+Role.hasMany(User, { foreignKey: 'roleId' });
+
+// User и UserProfile
+User.hasOne(UserProfile, { foreignKey: 'userId', as: 'profile' });
+UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// User и Permission (Direct assignment)
+User.belongsToMany(Permission, { through: 'UserPermissions', as: 'userPermissions' });
+Permission.belongsToMany(User, { through: 'UserPermissions' });
+
+// Role и Permission (Many-to-Many)
+Role.belongsToMany(Permission, { through: 'RolePermissions', as: 'permissions' });
+Permission.belongsToMany(Role, { through: 'RolePermissions' });
 
 // Сет содержит множество элементов
 WorkoutSet.hasMany(SetItem, { foreignKey: 'setId', as: 'items' });
@@ -78,6 +98,8 @@ sequelize.sync({ force: false });
 module.exports = {
   sequelize,
   User,
+  Role,
+  Permission,
   RefreshToken,
   BlacklistedToken,
   Exercise,

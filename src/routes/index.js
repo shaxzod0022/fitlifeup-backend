@@ -14,6 +14,8 @@ const progressRoutes = require('./progress.routes');
 const recommendationsRoutes = require('./recommendations.routes');
 const healthRoutes = require('./health.routes');
 const adminRoutes = require('./admin.routes');
+const roleRoutes = require('./role.routes');
+const staffRoutes = require('./staff.routes');
 
 const router = Router();
 
@@ -42,5 +44,7 @@ router.use('/profile', userProfileRoutes);
 router.use('/progress', progressRoutes);
 router.use('/recommendations', recommendationsRoutes);
 router.use('/admin', adminRoutes);
+router.use('/admin/roles', roleRoutes);
+router.use('/admin/staff', staffRoutes);
 
 module.exports = router;

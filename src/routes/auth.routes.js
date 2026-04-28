@@ -2,6 +2,7 @@
 
 const { Router } = require('express');
 const authController = require('../controllers/auth.controller');
+const authMiddleware = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const {
   registerValidator,
@@ -216,5 +217,16 @@ router.post('/refresh', validate(refreshValidator), authController.refresh);
  *         description: Invalid token
  */
 router.post('/logout', validate(logoutValidator), authController.logout);
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current user details
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/me', authMiddleware, authController.me);
 
 module.exports = router;

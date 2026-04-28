@@ -23,8 +23,8 @@ async function createExercise(userId, data) {
  * @param {string} userId - Идентификатор пользователя
  * @returns {Promise<Exercise[]>} Список упражнений
  */
-async function listExercises(userId, userRole = 'user') {
-  const whereClause = userRole === 'admin' 
+async function listExercises(userId, isPrivileged = false) {
+  const whereClause = isPrivileged 
     ? {} 
     : {
         [Op.or]: [
@@ -48,14 +48,14 @@ async function listExercises(userId, userRole = 'user') {
  * @throws {NotFoundError} Если упражнение не найдено
  * @throws {ForbiddenError} Если упражнение приватное и принадлежит другому пользователю
  */
-async function getExerciseById(userId, id, userRole = 'user') {
+async function getExerciseById(userId, id, isPrivileged = false) {
   const exercise = await Exercise.findByPk(id);
 
   if (!exercise) {
     throw new NotFoundError(`Упражнение с id ${id} не найдено`);
   }
 
-  if (userRole !== 'admin' && exercise.visibility === 'private' && exercise.creatorId !== userId) {
+  if (!isPrivileged && exercise.visibility === 'private' && exercise.creatorId !== userId) {
     throw new ForbiddenError('Доступ к приватному упражнению запрещён');
   }
 
@@ -72,14 +72,14 @@ async function getExerciseById(userId, id, userRole = 'user') {
  * @throws {NotFoundError} Если упражнение не найдено
  * @throws {ForbiddenError} Если пользователь не является владельцем
  */
-async function updateExercise(userId, id, data, userRole = 'user') {
+async function updateExercise(userId, id, data, isPrivileged = false) {
   const exercise = await Exercise.findByPk(id);
 
   if (!exercise) {
     throw new NotFoundError(`Упражнение с id ${id} не найдено`);
   }
 
-  if (userRole !== 'admin' && exercise.creatorId !== userId) {
+  if (!isPrivileged && exercise.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для изменения чужого упражнения');
   }
 
@@ -96,14 +96,14 @@ async function updateExercise(userId, id, data, userRole = 'user') {
  * @throws {NotFoundError} Если упражнение не найдено
  * @throws {ForbiddenError} Если пользователь не является владельцем
  */
-async function deleteExercise(userId, id, userRole = 'user') {
+async function deleteExercise(userId, id, isPrivileged = false) {
   const exercise = await Exercise.findByPk(id);
 
   if (!exercise) {
     throw new NotFoundError(`Упражнение с id ${id} не найдено`);
   }
 
-  if (userRole !== 'admin' && exercise.creatorId !== userId) {
+  if (!isPrivileged && exercise.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для удаления чужого упражнения');
   }
 

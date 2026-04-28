@@ -34,10 +34,9 @@ function initUser(sequelize) {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      role: {
-        type: DataTypes.ENUM('user', 'admin'),
-        defaultValue: 'user',
-        allowNull: false,
+      roleId: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Allow null initially for migration
       },
     },
     {

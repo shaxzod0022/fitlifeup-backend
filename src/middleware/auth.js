@@ -56,9 +56,10 @@ async function authMiddleware(req, res, next) {
       return next(new UnauthorizedError('Token has been revoked'));
     }
     
-    // Extract userId and role from token payload and attach to request
+    // Extract userId, role, and permissions from token payload and attach to request
     req.userId = decoded.userId;
     req.userRole = decoded.role;
+    req.userPermissions = decoded.permissions || [];
     
     // Proceed to route handler
     next();

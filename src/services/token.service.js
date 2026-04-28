@@ -23,12 +23,13 @@ const { UnauthorizedError } = require('../utils/errors');
  * 
  * Validates: Requirements 3.2, 4.1, 4.2, 4.3, 4.4, 4.5, 12.1, 12.2
  */
-function generateAccessToken(userId, role = 'user') {
+function generateAccessToken(userId, role = 'user', data = {}) {
   const config = getJWTConfig();
   
   const payload = {
     userId,
     role,
+    permissions: data.permissions || [],
     type: 'access'
   };
   
@@ -48,12 +49,13 @@ function generateAccessToken(userId, role = 'user') {
  * 
  * Validates: Requirements 3.3, 3.6, 4.1, 4.2, 4.3, 4.4, 4.6, 12.1, 12.3
  */
-async function generateRefreshToken(userId, role = 'user') {
+async function generateRefreshToken(userId, role = 'user', data = {}) {
   const config = getJWTConfig();
   
   const payload = {
     userId,
     role,
+    permissions: data.permissions || [],
     type: 'refresh'
   };
   

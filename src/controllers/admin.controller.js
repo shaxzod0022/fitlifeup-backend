@@ -1,6 +1,6 @@
 'use strict';
 
-const { User } = require('../models/User');
+const { User, Role } = require('../models');
 const { UserProfile } = require('../models/UserProfile');
 const { CompletedSet } = require('../models/CompletedSet');
 const { CompletedProgram } = require('../models/CompletedProgram');
@@ -11,7 +11,8 @@ const { CompletedProgram } = require('../models/CompletedProgram');
 async function getAllUsers(req, res, next) {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'email', 'role', 'createdAt'],
+      attributes: ['id', 'email', 'createdAt'],
+      include: [{ model: Role, as: 'role' }],
       order: [['createdAt', 'DESC']]
     });
     
@@ -22,13 +23,15 @@ async function getAllUsers(req, res, next) {
       profileMap[p.userId] = p;
     });
 
-    const result = users.map(user => ({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      profile: profileMap[user.id] || null
-    }));
+    const result = users
+      .filter(user => user.role && user.role.name !== 'superadmin')
+      .map(user => ({
+        id: user.id,
+        email: user.email,
+        role: user.role.name,
+        createdAt: user.createdAt,
+        profile: profileMap[user.id] || null
+      }));
 
     res.json(result);
   } catch (error) {

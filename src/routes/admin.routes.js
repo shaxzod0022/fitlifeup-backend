@@ -2,14 +2,13 @@
 
 const { Router } = require('express');
 const authMiddleware = require('../middleware/auth');
-const requireAdmin = require('../middleware/adminAuth');
+const checkPermission = require('../middleware/permission');
 const adminController = require('../controllers/admin.controller');
 
 const router = Router();
 
-// Apply auth and admin middleware to all admin routes
+// Apply auth middleware to all admin routes
 router.use(authMiddleware);
-router.use(requireAdmin);
 
 /**
  * @swagger
@@ -27,7 +26,7 @@ router.use(requireAdmin);
  *     security:
  *       - bearerAuth: []
  */
-router.get('/users', adminController.getAllUsers);
+router.get('/users', checkPermission('view_users'), adminController.getAllUsers);
 
 /**
  * @swagger
@@ -38,7 +37,7 @@ router.get('/users', adminController.getAllUsers);
  *     security:
  *       - bearerAuth: []
  */
-router.get('/stats', adminController.getGlobalStats);
+router.get('/stats', checkPermission('view_accounting'), adminController.getGlobalStats);
 
 /**
  * @swagger
@@ -49,6 +48,6 @@ router.get('/stats', adminController.getGlobalStats);
  *     security:
  *       - bearerAuth: []
  */
-router.delete('/users/:id', adminController.deleteUser);
+router.delete('/users/:id', checkPermission('manage_users'), adminController.deleteUser);
 
 module.exports = router;

@@ -122,9 +122,26 @@ async function logout(req, res, next) {
   }
 }
 
+/**
+ * GET /auth/me
+ * Get current authenticated user details (role and permissions)
+ */
+async function me(req, res, next) {
+  try {
+    res.status(200).json({
+      userId: req.userId,
+      role: req.userRole,
+      permissions: req.userPermissions
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
   refresh,
-  logout
+  logout,
+  me
 };
