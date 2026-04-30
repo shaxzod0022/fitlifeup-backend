@@ -1,6 +1,7 @@
 'use strict';
 
 const { User, UserProfile, Role, Permission, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const bcrypt = require('bcrypt');
 const { ValidationError, ConflictError } = require('../utils/errors');
 
@@ -16,7 +17,7 @@ async function getStaffList(req, res, next) {
           model: Role, 
           as: 'role',
           where: {
-            name: { [sequelize.Op.ne]: 'user' }
+            name: { [Op.ne]: 'user' }
           }
         },
         { model: UserProfile, as: 'profile' },

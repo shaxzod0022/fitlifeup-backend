@@ -35,6 +35,7 @@ async function listExercises(userId, isPrivileged = false) {
 
   const exercises = await Exercise.findAll({
     where: whereClause,
+    include: [{ model: require('../models').ExerciseCategory, as: 'category' }]
   });
   return exercises;
 }
@@ -49,7 +50,9 @@ async function listExercises(userId, isPrivileged = false) {
  * @throws {ForbiddenError} Если упражнение приватное и принадлежит другому пользователю
  */
 async function getExerciseById(userId, id, isPrivileged = false) {
-  const exercise = await Exercise.findByPk(id);
+  const exercise = await Exercise.findByPk(id, {
+    include: [{ model: require('../models').ExerciseCategory, as: 'category' }]
+  });
 
   if (!exercise) {
     throw new NotFoundError(`Упражнение с id ${id} не найдено`);

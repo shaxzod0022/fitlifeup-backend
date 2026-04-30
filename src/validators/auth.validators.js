@@ -14,7 +14,6 @@ const registerValidator = [
     .withMessage('Email is required')
     .isEmail()
     .withMessage('Invalid email format')
-    .normalizeEmail()
     .toLowerCase(),
 
   body('password')
@@ -36,7 +35,6 @@ const loginValidator = [
     .withMessage('Email is required')
     .isEmail()
     .withMessage('Invalid email format')
-    .normalizeEmail()
     .toLowerCase(),
 
   body('password')

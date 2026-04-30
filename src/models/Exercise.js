@@ -48,6 +48,10 @@ function initExercise(sequelize) {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      categoryId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       sequelize,

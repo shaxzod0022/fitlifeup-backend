@@ -16,6 +16,7 @@ const healthRoutes = require('./health.routes');
 const adminRoutes = require('./admin.routes');
 const roleRoutes = require('./role.routes');
 const staffRoutes = require('./staff.routes');
+const exerciseCategoryRoutes = require('./exerciseCategory.routes');
 
 const router = Router();
 
@@ -46,5 +47,6 @@ router.use('/recommendations', recommendationsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/admin/roles', roleRoutes);
 router.use('/admin/staff', staffRoutes);
+router.use('/admin/exercise-categories', exerciseCategoryRoutes);
 
 module.exports = router;

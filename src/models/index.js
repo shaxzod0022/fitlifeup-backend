@@ -20,6 +20,7 @@ const { SleepLog, initSleepLog } = require('./SleepLog');
 const { UserProfile, initUserProfile } = require('./UserProfile');
 const { CompletedSet, initCompletedSet } = require('./CompletedSet');
 const { CompletedProgram, initCompletedProgram } = require('./CompletedProgram');
+const { ExerciseCategory, initExerciseCategory } = require('./ExerciseCategory');
 
 // Инициализация всех моделей
 initUser(sequelize);
@@ -39,6 +40,7 @@ initSleepLog(sequelize);
 initUserProfile(sequelize);
 initCompletedSet(sequelize);
 initCompletedProgram(sequelize);
+initExerciseCategory(sequelize);
 
 // ─── Ассоциации: упражнения и сеты ───────────────────────────────────────────
 
@@ -69,6 +71,10 @@ SetItem.belongsTo(WorkoutSet, { foreignKey: 'setId' });
 // Элемент сета ссылается на упражнение
 SetItem.belongsTo(Exercise, { foreignKey: 'exerciseId', as: 'exercise' });
 Exercise.hasMany(SetItem, { foreignKey: 'exerciseId' });
+
+// Exercise and ExerciseCategory
+Exercise.belongsTo(ExerciseCategory, { foreignKey: 'categoryId', as: 'category' });
+ExerciseCategory.hasMany(Exercise, { foreignKey: 'categoryId', as: 'exercises' });
 
 // ─── Ассоциации: программы и сеты ────────────────────────────────────────────
 
@@ -114,4 +120,5 @@ module.exports = {
   UserProfile,
   CompletedSet,
   CompletedProgram,
+  ExerciseCategory,
 };
