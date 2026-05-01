@@ -9,32 +9,29 @@
  *            3.4, 3.5, 3.6, 3.7, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 7.1, 7.2, 7.3, 7.6
  */
 
-const { User, Role, Permission } = require('../models');
+const { User, Role, Permission, UserProfile } = require('../models');
 const passwordService = require('./password.service');
 const tokenService = require('./token.service');
 const { ConflictError, UnauthorizedError, ValidationError } = require('../utils/errors');
 
 /**
- * Register a new user with email and password
+ * Register a new user and return tokens
  * 
  * @param {string} email - User's email address
  * @param {string} password - User's plaintext password
- * @returns {Promise<{userId: number}>} The created user's ID
- * @throws {ValidationError} If email format is invalid or password is too short
- * @throws {ConflictError} If email already exists
- * 
- * Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7
+ * @param {object} [profileData] - Optional profile data (firstName, lastName, phone, etc.)
+ * @returns {Promise<{accessToken: string, refreshToken: string, userId: number}>}
  */
-async function register(email, password) {
+async function register(email, password, profileData = null) {
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailRegex.test(email)) {
     throw new ValidationError('Invalid email format');
   }
 
-  // Validate password length (minimum 8 characters)
-  if (!password || password.length < 8) {
-    throw new ValidationError('Password must be at least 8 characters');
+  // Validate password length
+  if (!password || password.length < 4) { // Lowered to 4 for phone-as-password ease
+    throw new ValidationError('Password must be at least 4 characters');
   }
 
   // Check for duplicate email
@@ -46,14 +43,25 @@ async function register(email, password) {
   // Hash password
   const passwordHash = await passwordService.hash(password);
 
-  // Create user record
+  // Create user record with default 'user' role
+  const userRole = await Role.findOne({ where: { name: 'user' } });
   const user = await User.create({
     email,
-    passwordHash
+    passwordHash,
+    roleId: userRole ? userRole.id : null
   });
 
-  // Return only userId (never expose passwordHash)
-  return { userId: user.id };
+  // Create profile if data provided
+  if (profileData) {
+    await UserProfile.create({
+      ...profileData,
+      userId: user.id,
+      email: email // Store email in profile as well as requested
+    });
+  }
+
+  // Automatically login and return tokens
+  return login(email, password);
 }
 
 /**
@@ -162,14 +170,41 @@ async function refresh(refreshToken) {
 }
 
 /**
+ * Authenticate user by email only (requested by user for ease of entry)
+ * 
+ * @param {string} email 
+ * @returns {Promise<{accessToken: string, refreshToken: string, userId: number}>}
+ */
+async function loginByEmail(email) {
+  const user = await User.findOne({ 
+    where: { email },
+    include: [
+      { 
+        model: Role, 
+        as: 'role',
+        include: [{ model: Permission, as: 'permissions' }]
+      }
+    ]
+  });
+  
+  if (!user) {
+    throw new UnauthorizedError('User not found');
+  }
+
+  const roleName = user.role ? user.role.name : 'user';
+  const rolePerms = user.role && user.role.permissions ? user.role.permissions.map(p => p.slug) : [];
+  const accessToken = tokenService.generateAccessToken(user.id, roleName, { permissions: rolePerms });
+  const refreshToken = await tokenService.generateRefreshToken(user.id, roleName, { permissions: rolePerms });
+
+  return {
+    accessToken,
+    refreshToken,
+    userId: user.id
+  };
+}
+
+/**
  * Logout user by blacklisting tokens
- * 
- * @param {string} refreshToken - The refresh token to blacklist
- * @param {string} [accessToken] - Optional access token to blacklist
- * @returns {Promise<void>}
- * @throws {UnauthorizedError} If refresh token is invalid
- * 
- * Validates: Requirements 7.1, 7.2, 7.3, 7.6
  */
 async function logout(refreshToken, accessToken) {
   // Verify refresh token to get expiration
@@ -200,6 +235,7 @@ async function logout(refreshToken, accessToken) {
 module.exports = {
   register,
   login,
+  loginByEmail,
   refresh,
   logout
 };

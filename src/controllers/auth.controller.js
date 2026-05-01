@@ -23,14 +23,14 @@ const authService = require('../services/auth.service');
  */
 async function register(req, res, next) {
   try {
-    const { email, password } = req.body;
+    const { email, password, ...profileData } = req.body;
     
-    // Call auth service to register user
-    const result = await authService.register(email, password);
+    // Call auth service to register user and create profile
+    const result = await authService.register(email, password, profileData);
     
-    // Return 201 with userId and success message
+    // Return 201 with tokens and success message
     res.status(201).json({
-      userId: result.userId,
+      ...result,
       message: 'User registered successfully'
     });
   } catch (err) {
@@ -138,9 +138,20 @@ async function me(req, res, next) {
   }
 }
 
+async function loginByEmail(req, res, next) {
+  try {
+    const { email } = req.body;
+    const result = await authService.loginByEmail(email);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
+  loginByEmail,
   refresh,
   logout,
   me

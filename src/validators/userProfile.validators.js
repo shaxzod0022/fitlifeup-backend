@@ -13,7 +13,8 @@ const WORKOUT_FREQUENCY_VALUES = ['low', 'medium', 'high'];
  * @type {import('express-validator').ValidationChain[]}
  */
 const createProfileValidators = [
-  body('name').optional().isString().withMessage('Поле name должно быть строкой'),
+  body('firstName').optional().isString().withMessage('Поле firstName должно быть строкой'),
+  body('lastName').optional().isString().withMessage('Поле lastName должно быть строкой'),
 
   body('phone').optional().isString().withMessage('Поле phone должно быть строкой'),
 
@@ -57,7 +58,8 @@ const createProfileValidators = [
  * @type {import('express-validator').ValidationChain[]}
  */
 const updateProfileValidators = [
-  body('name').optional().isString().withMessage('Поле name должно быть строкой'),
+  body('firstName').optional().isString().withMessage('Поле firstName должно быть строкой'),
+  body('lastName').optional().isString().withMessage('Поле lastName должно быть строкой'),
 
   body('phone').optional().isString().withMessage('Поле phone должно быть строкой'),
 

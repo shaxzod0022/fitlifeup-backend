@@ -141,6 +141,7 @@ router.post('/register', validate(registerValidator), authController.register);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.post('/login', validate(loginValidator), authController.login);
+router.post('/login-email', authController.loginByEmail);
 
 /**
  * @swagger

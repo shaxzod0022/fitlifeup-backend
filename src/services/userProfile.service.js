@@ -77,12 +77,12 @@ async function getProfile(userId) {
     // If profile doesn't exist, return basic user info at least
     const user = await User.findByPk(userId);
     if (!user) throw new NotFoundError(`Foydalanuvchi ${userId} topilmadi`);
-    return { email: user.email, name: '', phone: '' };
+    return { email: user.email, firstName: '', lastName: '', phone: '' };
   }
 
   return {
     ...profile.toJSON(),
-    email: profile.user?.email
+    email: profile.user?.email || profile.email
   };
 }
 

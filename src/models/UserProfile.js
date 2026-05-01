@@ -21,11 +21,17 @@ function initUserProfile(sequelize) {
         primaryKey: true,
       },
       userId: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false,
         unique: true,
       },
-      name: {
+      firstName: {
+        type: DataTypes.STRING,
+      },
+      lastName: {
+        type: DataTypes.STRING,
+      },
+      email: {
         type: DataTypes.STRING,
       },
       phone: {
