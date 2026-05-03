@@ -43,6 +43,10 @@ function initWorkoutSet(sequelize) {
         type: DataTypes.FLOAT,
         defaultValue: 0,
       },
+      categoryId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       sequelize,

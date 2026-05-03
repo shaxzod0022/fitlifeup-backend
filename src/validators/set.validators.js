@@ -33,10 +33,34 @@ const createSetValidators = [
 
   body('items.*.exerciseId')
     .if(body('items').exists())
-    .notEmpty()
-    .withMessage('Поле items[].exerciseId обязательно')
+    .optional()
     .isUUID()
     .withMessage('Поле items[].exerciseId должно быть UUID'),
+
+  body('items.*.name')
+    .if(body('items').exists())
+    .notEmpty()
+    .withMessage('Поле items[].name обязательно')
+    .isString()
+    .withMessage('Поле items[].name должно быть строкой'),
+
+  body('items.*.subtitle')
+    .if(body('items').exists())
+    .optional()
+    .isString()
+    .withMessage('Поле items[].subtitle должно быть строкой'),
+
+  body('items.*.image')
+    .if(body('items').exists())
+    .optional()
+    .isString()
+    .withMessage('Поле items[].image должно быть строкой'),
+
+  body('items.*.time')
+    .if(body('items').exists())
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Поле items[].time должно быть числом >= 0'),
 
   body('items.*.count')
     .if(body('items').exists())
@@ -90,10 +114,33 @@ const updateSetValidators = [
 
   body('items.*.exerciseId')
     .if(body('items').exists())
-    .notEmpty()
-    .withMessage('Поле items[].exerciseId обязательно')
+    .optional()
     .isUUID()
     .withMessage('Поле items[].exerciseId должно быть UUID'),
+
+  body('items.*.name')
+    .if(body('items').exists())
+    .optional()
+    .isString()
+    .withMessage('Поле items[].name должно быть строкой'),
+
+  body('items.*.subtitle')
+    .if(body('items').exists())
+    .optional()
+    .isString()
+    .withMessage('Поле items[].subtitle должно быть строкой'),
+
+  body('items.*.image')
+    .if(body('items').exists())
+    .optional()
+    .isString()
+    .withMessage('Поле items[].image должно быть строкой'),
+
+  body('items.*.time')
+    .if(body('items').exists())
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Поле items[].time должно быть числом >= 0'),
 
   body('items.*.count')
     .if(body('items').exists())

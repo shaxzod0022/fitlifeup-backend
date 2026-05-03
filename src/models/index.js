@@ -65,7 +65,7 @@ Role.belongsToMany(Permission, { through: 'RolePermissions', as: 'permissions' }
 Permission.belongsToMany(Role, { through: 'RolePermissions' });
 
 // Сет содержит множество элементов
-WorkoutSet.hasMany(SetItem, { foreignKey: 'setId', as: 'items' });
+WorkoutSet.hasMany(SetItem, { foreignKey: 'setId', as: 'items', onDelete: 'CASCADE' });
 SetItem.belongsTo(WorkoutSet, { foreignKey: 'setId' });
 
 // Элемент сета ссылается на упражнение
@@ -76,15 +76,19 @@ Exercise.hasMany(SetItem, { foreignKey: 'exerciseId' });
 Exercise.belongsTo(ExerciseCategory, { foreignKey: 'categoryId', as: 'category' });
 ExerciseCategory.hasMany(Exercise, { foreignKey: 'categoryId', as: 'exercises' });
 
+// WorkoutSet and ExerciseCategory
+WorkoutSet.belongsTo(ExerciseCategory, { foreignKey: 'categoryId', as: 'category' });
+ExerciseCategory.hasMany(WorkoutSet, { foreignKey: 'categoryId', as: 'sets' });
+
 // ─── Ассоциации: программы и сеты ────────────────────────────────────────────
 
 // Программа содержит множество элементов-сетов
-WorkoutProgram.hasMany(ProgramSet, { foreignKey: 'programId', as: 'programSets' });
+WorkoutProgram.hasMany(ProgramSet, { foreignKey: 'programId', as: 'programSets', onDelete: 'CASCADE' });
 ProgramSet.belongsTo(WorkoutProgram, { foreignKey: 'programId' });
 
 // Элемент программы ссылается на сет
 ProgramSet.belongsTo(WorkoutSet, { foreignKey: 'setId' });
-WorkoutSet.hasMany(ProgramSet, { foreignKey: 'setId' });
+WorkoutSet.hasMany(ProgramSet, { foreignKey: 'setId', onDelete: 'CASCADE' });
 
 // ─── Ассоциации: питание ──────────────────────────────────────────────────────
 

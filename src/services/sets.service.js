@@ -1,7 +1,7 @@
 'use strict';
 
 const { Op } = require('sequelize');
-const { WorkoutSet, SetItem, Exercise } = require('../models/index');
+const { WorkoutSet, SetItem, ProgramSet, Exercise } = require('../models/index');
 const { NotFoundError, ForbiddenError, UnprocessableError } = require('../utils/errors');
 
 /**
@@ -16,14 +16,12 @@ function calculateTotalTime(items) {
   if (!items || items.length === 0) return 0;
 
   return items.reduce((total, item) => {
-    const exerciseTime = (item.exercise && item.exercise.time) || 0;
+    const exerciseTime = item.time || 0;
     const count = item.count || 0;
     const repeats = item.repeats || 0;
     const breakTime = item.break || 0;
 
-    // Конвертируем паузу из секунд в минуты для единообразия
     const breakMinutes = breakTime / 60;
-
     const itemTime = (exerciseTime * count * repeats) + (count * breakMinutes * repeats);
     return total + itemTime;
   }, 0);
@@ -41,24 +39,7 @@ function calculateTotalTime(items) {
 async function createSet(userId, data, userRole = 'user') {
   const { items = [], ...setData } = data;
 
-  // Проверяем доступность всех упражнений
-  if (items.length > 0) {
-    const exerciseIds = items.map((item) => item.exerciseId);
-    const exercises = await Exercise.findAll({ where: { id: exerciseIds } });
-
-    // Проверяем, что все упражнения найдены и доступны
-    for (const exerciseId of exerciseIds) {
-      const exercise = exercises.find((e) => e.id === exerciseId);
-      if (!exercise) {
-        throw new NotFoundError(`Упражнение с id ${exerciseId} не найдено`);
-      }
-      if (userRole !== 'admin' && exercise.visibility === 'private' && exercise.creatorId !== userId) {
-        throw new UnprocessableError(
-          `Упражнение с id ${exerciseId} является приватным и принадлежит другому пользователю`
-        );
-      }
-    }
-  }
+  // No exercise validation needed as they are defined inline
 
   // Создаём сет
   const workoutSet = await WorkoutSet.create({ ...setData, creatorId: userId });
@@ -116,8 +97,11 @@ async function listSets(userId, userRole = 'user') {
       {
         model: SetItem,
         as: 'items',
-        include: [{ model: Exercise, as: 'exercise' }],
       },
+      {
+        model: require('../models').ExerciseCategory,
+        as: 'category'
+      }
     ],
   });
   return sets;
@@ -139,8 +123,11 @@ async function getSetById(userId, id, userRole = 'user') {
       {
         model: SetItem,
         as: 'items',
-        include: [{ model: Exercise, as: 'exercise' }],
       },
+      {
+        model: require('../models').ExerciseCategory,
+        as: 'category'
+      }
     ],
   });
 
@@ -148,7 +135,7 @@ async function getSetById(userId, id, userRole = 'user') {
     throw new NotFoundError(`Сет с id ${id} не найден`);
   }
 
-  if (userRole !== 'admin' && workoutSet.visibility === 'private' && workoutSet.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && workoutSet.visibility === 'private' && workoutSet.creatorId !== userId) {
     throw new ForbiddenError('Доступ к приватному сету запрещён');
   }
 
@@ -174,7 +161,7 @@ async function updateSet(userId, id, data, userRole = 'user') {
     throw new NotFoundError(`Сет с id ${id} не найден`);
   }
 
-  if (userRole !== 'admin' && workoutSet.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && workoutSet.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для изменения чужого сета');
   }
 
@@ -183,26 +170,8 @@ async function updateSet(userId, id, data, userRole = 'user') {
   // Обновляем основные данные сета
   await workoutSet.update(setData);
 
-  // Если переданы элементы — обновляем их
+  // If items are provided, update them
   if (items !== undefined) {
-    // Проверяем доступность упражнений
-    if (items.length > 0) {
-      const exerciseIds = items.map((item) => item.exerciseId);
-      const exercises = await Exercise.findAll({ where: { id: exerciseIds } });
-
-      for (const exerciseId of exerciseIds) {
-        const exercise = exercises.find((e) => e.id === exerciseId);
-        if (!exercise) {
-          throw new NotFoundError(`Упражнение с id ${exerciseId} не найдено`);
-        }
-        if (userRole !== 'admin' && exercise.visibility === 'private' && exercise.creatorId !== userId) {
-          throw new UnprocessableError(
-            `Упражнение с id ${exerciseId} является приватным и принадлежит другому пользователю`
-          );
-        }
-      }
-    }
-
     // Удаляем старые элементы и создаём новые
     await SetItem.destroy({ where: { setId: id } });
     if (items.length > 0) {
@@ -221,7 +190,6 @@ async function updateSet(userId, id, data, userRole = 'user') {
       {
         model: SetItem,
         as: 'items',
-        include: [{ model: Exercise, as: 'exercise' }],
       },
     ],
   });
@@ -251,9 +219,13 @@ async function deleteSet(userId, id, userRole = 'user') {
     throw new NotFoundError(`Сет с id ${id} не найден`);
   }
 
-  if (userRole !== 'admin' && workoutSet.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && workoutSet.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для удаления чужого сета');
   }
+
+  // Удаляем связанные элементы сета и связи с программами вручную для надёжности (особенно для SQLite)
+  await SetItem.destroy({ where: { setId: id } });
+  await ProgramSet.destroy({ where: { setId: id } });
 
   await workoutSet.destroy();
 }

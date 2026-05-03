@@ -27,6 +27,8 @@ router.use(authMiddleware);
  *       - bearerAuth: []
  */
 router.get('/users', checkPermission('view_users'), adminController.getAllUsers);
+router.get('/users/:id', checkPermission('view_users'), adminController.getUserDetails);
+router.put('/users/:id', checkPermission('manage_users'), adminController.updateUser);
 
 /**
  * @swagger

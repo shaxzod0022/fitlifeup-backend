@@ -8,7 +8,7 @@ const authMiddleware = require('./auth');
  * Must be used AFTER authMiddleware.
  */
 function requireAdmin(req, res, next) {
-  if (!req.userRole || req.userRole !== 'admin') {
+  if (!req.userRole || (req.userRole !== 'admin' && req.userRole !== 'superadmin')) {
     return next(new UnauthorizedError('Access denied: Admin privileges required'));
   }
   next();

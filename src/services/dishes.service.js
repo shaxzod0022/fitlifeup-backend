@@ -24,7 +24,7 @@ async function createDish(userId, data, userRole = 'user') {
  * @returns {Promise<Dish[]>} Список блюд
  */
 async function listDishes(userId, userRole = 'user') {
-  const whereClause = userRole === 'admin'
+  const whereClause = (userRole === 'admin' || userRole === 'superadmin')
     ? {}
     : {
         [Op.or]: [
@@ -55,7 +55,7 @@ async function getDishById(userId, id, userRole = 'user') {
     throw new NotFoundError(`Блюдо с id ${id} не найдено`);
   }
 
-  if (userRole !== 'admin' && dish.visibility === 'private' && dish.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && dish.visibility === 'private' && dish.creatorId !== userId) {
     throw new ForbiddenError('Доступ к приватному блюду запрещён');
   }
 
@@ -79,7 +79,7 @@ async function updateDish(userId, id, data, userRole = 'user') {
     throw new NotFoundError(`Блюдо с id ${id} не найдено`);
   }
 
-  if (userRole !== 'admin' && dish.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && dish.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для изменения чужого блюда');
   }
 
@@ -103,7 +103,7 @@ async function deleteDish(userId, id, userRole = 'user') {
     throw new NotFoundError(`Блюдо с id ${id} не найдено`);
   }
 
-  if (userRole !== 'admin' && dish.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && dish.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для удаления чужого блюда');
   }
 

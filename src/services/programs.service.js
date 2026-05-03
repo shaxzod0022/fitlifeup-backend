@@ -37,7 +37,7 @@ async function createProgram(userId, data, userRole = 'user') {
       if (!workoutSet) {
         throw new NotFoundError(`Сет с id ${setId} не найден`);
       }
-      if (userRole !== 'admin' && workoutSet.visibility === 'private' && workoutSet.creatorId !== userId) {
+      if (userRole !== 'admin' && userRole !== 'superadmin' && workoutSet.visibility === 'private' && workoutSet.creatorId !== userId) {
         throw new UnprocessableError(
           `Сет с id ${setId} является приватным и принадлежит другому пользователю`
         );
@@ -92,7 +92,7 @@ async function createProgram(userId, data, userRole = 'user') {
  * @returns {Promise<WorkoutProgram[]>} Список программ
  */
 async function listPrograms(userId, userRole = 'user') {
-  const whereClause = userRole === 'admin'
+  const whereClause = (userRole === 'admin' || userRole === 'superadmin')
     ? {}
     : {
         [Op.or]: [
@@ -137,7 +137,7 @@ async function getProgramById(userId, id, userRole = 'user') {
     throw new NotFoundError(`Программа с id ${id} не найдена`);
   }
 
-  if (userRole !== 'admin' && program.visibility === 'private' && program.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && program.visibility === 'private' && program.creatorId !== userId) {
     throw new ForbiddenError('Доступ к приватной программе запрещён');
   }
 
@@ -163,7 +163,7 @@ async function updateProgram(userId, id, data, userRole = 'user') {
     throw new NotFoundError(`Программа с id ${id} не найдена`);
   }
 
-  if (userRole !== 'admin' && program.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && program.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для изменения чужой программы');
   }
 
@@ -182,7 +182,7 @@ async function updateProgram(userId, id, data, userRole = 'user') {
         if (!workoutSet) {
           throw new NotFoundError(`Сет с id ${setId} не найден`);
         }
-        if (userRole !== 'admin' && workoutSet.visibility === 'private' && workoutSet.creatorId !== userId) {
+        if (userRole !== 'admin' && userRole !== 'superadmin' && workoutSet.visibility === 'private' && workoutSet.creatorId !== userId) {
           throw new UnprocessableError(
             `Сет с id ${setId} является приватным и принадлежит другому пользователю`
           );
@@ -237,9 +237,12 @@ async function deleteProgram(userId, id, userRole = 'user') {
     throw new NotFoundError(`Программа с id ${id} не найдена`);
   }
 
-  if (userRole !== 'admin' && program.creatorId !== userId) {
+  if (userRole !== 'admin' && userRole !== 'superadmin' && program.creatorId !== userId) {
     throw new ForbiddenError('Нет прав для удаления чужой программы');
   }
+
+  // Удаляем связи с сетами вручную
+  await ProgramSet.destroy({ where: { programId: id } });
 
   await program.destroy();
 }

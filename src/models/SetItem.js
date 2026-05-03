@@ -26,7 +26,19 @@ function initSetItem(sequelize) {
       },
       exerciseId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+      },
+      subtitle: {
+        type: DataTypes.STRING,
+      },
+      image: {
+        type: DataTypes.STRING,
+      },
+      time: {
+        type: DataTypes.FLOAT,
       },
       count: {
         type: DataTypes.INTEGER,
